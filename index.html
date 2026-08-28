@@ -8,123 +8,250 @@
     <title>Difotoku - Photobooth Online</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="app-container">
-        <header>
-            <h1>DIFOTOKU</h1>
-            <p>Jepret gaya skenamu hari ini!</p>
-        </header>
+    <!-- Background Animation Elements -->
+    <div class="bg-animated">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
-        <main>
-            <div class="booth-container">
-                <!-- Camera Preview Area -->
-                <div class="preview-area" id="preview-area">
-                    <video id="camera-feed" autoplay playsinline muted></video>
-                    <img id="frame-overlay" src="images/frame1.png" alt="Frame Overlay">
-                    <!-- Loading or Error State -->
-                    <div id="camera-status" class="camera-status">
-                        Membuka kamera...
+    <div class="app-container">
+        <!-- VIEW 1: HOME -->
+        <div id="view-home" class="view-section active elegant-theme">
+            <div class="elegant-content">
+                <!-- HEADER -->
+                <div class="elegant-header">
+                    <h1 class="elegant-title">DIFOTOKU</h1>
+                    <svg class="heart-logo" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3">
+                        <path d="M50 85 C50 85 20 60 20 35 A15 15 0 0 1 50 35 A15 15 0 0 1 80 35 C80 60 50 85 50 85 Z"/>
+                        <!-- Shutter blades inside heart -->
+                        <line x1="30" y1="35" x2="50" y2="20" />
+                        <line x1="50" y1="20" x2="70" y2="35" />
+                        <line x1="70" y1="35" x2="60" y2="60" />
+                        <line x1="60" y1="60" x2="40" y2="60" />
+                        <line x1="40" y1="60" x2="30" y2="35" />
+                    </svg>
+                </div>
+                <p class="elegant-subtitle">Abadikan Gaya Terbaikmu<br>& Bagikan Keseruanmu</p>
+
+                <!-- MIDDLE SECTION: Features & Photostrips -->
+                <div class="elegant-layout">
+                    <!-- Left: Features -->
+                    <div class="features-column">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><circle cx="7" cy="12" r="1"/><circle cx="17" cy="12" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="12" cy="17" r="1"/></svg>
+                            </div>
+                            <span>13+ Frame<br>Kekinian</span>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2L2 14L10 22L22 10L14 2Z"/><line x1="10" y1="14" x2="14" y2="10"/><path d="M4 22L2 24"/></svg>
+                            </div>
+                            <span>AI<br>Transparency</span>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6V18M9 9h6M9 15h6"/></svg>
+                            </div>
+                            <span>Gratis</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Photostrips & Booth -->
+                    <div class="strips-column">
+                        <div class="strips-grid">
+                            <!-- Strip 1 -->
+                            <div class="mock-strip">
+                                <div class="mock-photo"><div class="face-f"></div><div class="face-m"></div></div>
+                                <div class="mock-photo"><div class="face-m"></div><div class="face-f"></div></div>
+                                <span class="strip-text">DIFOTOKU</span>
+                            </div>
+                            <!-- Strip 2 -->
+                            <div class="mock-strip">
+                                <div class="mock-photo"><div class="face-m"></div><div class="face-f"></div></div>
+                                <div class="mock-photo"><div class="face-f"></div><div class="face-m"></div></div>
+                                <span class="strip-text">DIFOTOKU</span>
+                            </div>
+                            <!-- Strip 3 -->
+                            <div class="mock-strip">
+                                <div class="mock-photo"><div class="face-f"></div><div class="face-m"></div></div>
+                                <div class="mock-photo"><div class="face-m"></div><div class="face-f"></div></div>
+                                <span class="strip-text">DIFOTOKU</span>
+                            </div>
+                            <!-- Strip 4 -->
+                            <div class="mock-strip">
+                                <div class="mock-photo"><div class="face-m"></div><div class="face-f"></div></div>
+                                <div class="mock-photo"><div class="face-f"></div><div class="face-m"></div></div>
+                                <span class="strip-text">DIFOTOKU</span>
+                            </div>
+                        </div>
+                        <!-- Photobooth Illustration (CSS Based) -->
+                        <div class="booth-illustration">
+                            <div class="booth-top"><div class="booth-camera"></div></div>
+                            <div class="booth-body">
+                                <div class="booth-left-panel">
+                                    <div class="booth-window"></div>
+                                    <div class="booth-slot"></div>
+                                </div>
+                                <div class="booth-center-panel">
+                                    <div class="booth-screen"></div>
+                                    <div class="booth-controls"></div>
+                                </div>
+                                <div class="booth-curtain">
+                                    <div class="curtain-fold"></div><div class="curtain-fold"></div><div class="curtain-fold"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Hidden Canvas for Processing -->
-                <canvas id="capture-canvas"></canvas>
+                <!-- BOTTOM BUTTON -->
+                <button id="btn-start" class="btn-elegant">
+                    MULAI SEKARANG <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
 
-                <!-- Result Area (Hidden initially) -->
-                <div class="result-area hidden" id="result-area">
+        <!-- VIEW 2: CAMERA -->
+        <div id="view-camera" class="view-section">
+            <header class="mini-header">
+                <button id="btn-back-home" class="btn-icon" aria-label="Kembali" title="Kembali">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </button>
+                <h2 style="font-size: 1.4rem;">Pilih Frame</h2>
+                <button id="btn-flip-camera" class="btn-icon" aria-label="Balik Kamera" title="Balik Kamera">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                </button>
+            </header>
+
+            <main>
+                <!-- Layout Selection -->
+                <div class="layout-selector">
+                    <button class="layout-btn active" data-layout="1-cut">1 Foto</button>
+                    <button class="layout-btn" data-layout="4-cut-strip">4 Strip</button>
+                    <button class="layout-btn" data-layout="4-cut-grid">4 Grid</button>
+                </div>
+
+                <div class="booth-container">
+                    <!-- Camera Preview Area -->
+                    <div class="preview-area" id="preview-area">
+                        <video id="camera-feed" autoplay playsinline muted></video>
+                        <img id="frame-overlay" src="images/frame1.png" alt="Frame Overlay">
+                        <!-- Countdown Timer -->
+                        <div id="countdown-display" class="countdown-display hidden">3</div>
+                        <!-- Loading or Error State -->
+                        <div id="camera-status" class="camera-status">
+                            Menyiapkan kamera...
+                        </div>
+                    </div>
+                    <!-- Hidden Canvas for Processing -->
+                    <canvas id="capture-canvas"></canvas>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-controls">
+                    <button id="btn-show-frames" class="btn-icon-secondary frame-btn" title="Pilih Frame">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </button>
+                    
+                    <button id="btn-capture" class="btn-capture-large" aria-label="Ambil Foto">
+                        <div class="capture-inner"></div>
+                    </button>
+                    
+                    <div class="side-actions">
+                        <label for="upload-input" class="btn-icon-secondary" aria-label="Upload Foto" title="Upload Foto">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </label>
+                        <input type="file" id="upload-input" accept="image/*" multiple hidden>
+                    </div>
+                </div>
+            </main>
+            
+            <!-- Bottom Sheet Modal for Frames -->
+            <div id="frame-modal" class="bottom-sheet">
+                <div class="bottom-sheet-header">
+                    <h3>Pilih Frame</h3>
+                    <button id="btn-close-frames" class="btn-icon-small">✕</button>
+                </div>
+                <section class="frame-gallery">
+                    <div class="gallery-scroll">
+                        <div class="frame-option active" data-frame="images/frame1.png">
+                            <img src="images/frame1.png" alt="Blur"><span>Blur</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame2.png">
+                            <img src="images/frame2.png" alt="Indie"><span>Indie</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame3.png">
+                            <img src="images/frame3.png" alt="Lokal"><span>Lokal</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame4.png">
+                            <img src="images/frame4.png" alt="Cafe"><span>Cafe</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame5.png">
+                            <img src="images/frame5.png" alt="Gamer"><span>Gamer</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame6.png">
+                            <img src="images/frame6.png" alt="Koran"><span>Koran</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame7.png">
+                            <img src="images/frame7.png" alt="Y2K"><span>Y2K</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame8.png">
+                            <img src="images/frame8.png" alt="Retro"><span>Retro</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame9.png">
+                            <img src="images/frame9.png" alt="Polaroid"><span>Polaroid</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame10.png">
+                            <img src="images/frame10.png" alt="Film"><span>Film</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame11.png">
+                            <img src="images/frame11.png" alt="Wanted"><span>Wanted</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame12.png">
+                            <img src="images/frame12.png" alt="Social"><span>Social</span>
+                        </div>
+                        <div class="frame-option" data-frame="images/frame13.png">
+                            <img src="images/frame13.png" alt="K-Pop"><span>K-Pop</span>
+                        </div>
+                    </div>
+                </section>
+            </div> <!-- closes frame-modal -->
+        </div> <!-- closes view-camera -->
+        <!-- VIEW 3: RESULT -->
+        <div id="view-result" class="view-section">
+            <header class="mini-header center-header">
+                <h2>Hasil Kerenmu! ✨</h2>
+            </header>
+            <div class="booth-container result-container">
+                <div class="result-area" id="result-area">
                     <img id="result-image" alt="Hasil Foto">
                 </div>
             </div>
-
-            <!-- Action Buttons -->
-            <div class="action-controls">
-                <button id="btn-capture" class="btn btn-primary" aria-label="Ambil Foto">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    <span>Ambil Foto</span>
+            
+            <div class="action-controls result-actions-wrapper">
+                <button id="btn-retake" class="btn btn-secondary">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Ulangi</span>
                 </button>
-                <div class="result-actions hidden" id="result-actions">
-                    <button id="btn-retake" class="btn btn-secondary">Ulangi</button>
-                    <button id="btn-download" class="btn btn-primary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        <span>Unduh</span>
-                    </button>
-                </div>
+                <button id="btn-download" class="btn btn-primary btn-glow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Unduh Foto</span>
+                </button>
             </div>
-
-            <!-- Frame Gallery -->
-            <section class="frame-gallery">
-                <h3>Pilih Bingkai Skenamu</h3>
-                <div class="gallery-scroll">
-                    <div class="frame-option active" data-frame="images/frame1.png">
-                        <img src="images/frame1.png" alt="Nostalgia Blur">
-                        <span>Blur</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame2.png">
-                        <img src="images/frame2.png" alt="Indie Music">
-                        <span>Indie</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame3.png">
-                        <img src="images/frame3.png" alt="Streetwear">
-                        <span>Lokal</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame4.png">
-                        <img src="images/frame4.png" alt="Cafe Hopping">
-                        <span>Cafe</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame5.png">
-                        <img src="images/frame5.png" alt="Digital/Gaming">
-                        <span>Gamer</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame6.png">
-                        <img src="images/frame6.png" alt="Koran Berita">
-                        <span>Koran</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame7.png">
-                        <img src="images/frame7.png" alt="Y2K Cyberpunk">
-                        <span>Y2K</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame8.png">
-                        <img src="images/frame8.png" alt="Retro VHS">
-                        <span>Retro</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame9.png">
-                        <img src="images/frame9.png" alt="Polaroid Wall">
-                        <span>Polaroid</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame10.png">
-                        <img src="images/frame10.png" alt="Film 35mm">
-                        <span>Film</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame11.png">
-                        <img src="images/frame11.png" alt="Wanted Poster">
-                        <span>Wanted</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame12.png">
-                        <img src="images/frame12.png" alt="Social Media Overlay">
-                        <span>Social</span>
-                    </div>
-                    <div class="frame-option" data-frame="images/frame13.png">
-                        <img src="images/frame13.png" alt="K-Pop Deco Photocard">
-                        <span>K-Pop</span>
-                    </div>
-                </div>
-            </section>
-        </main>
+        </div>
     </div>
+
+    <!-- Audio Effect -->
+    <audio id="shutter-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3" preload="auto"></audio>
+
     <script src="script.js"></script>
 </body>
 

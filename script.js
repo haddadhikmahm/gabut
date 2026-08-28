@@ -13,8 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultActions = document.getElementById('result-actions');
     const btnRetake = document.getElementById('btn-retake');
     const btnDownload = document.getElementById('btn-download');
+    const btnShowFrames = document.getElementById('btn-show-frames');
+    const btnCloseFrames = document.getElementById('btn-close-frames');
+    const btnFlipCamera = document.getElementById('btn-flip-camera');
+    const uploadInput = document.getElementById('upload-input');
     
-    // Gallery Options
+    // UI Elements
+    const frameModal = document.getElementById('frame-modal');
     const frameOptions = document.querySelectorAll('.frame-option');
 
     // AI Magic: Cache & Function to remove fake transparency
@@ -37,8 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = imgData.data;
 
                 // --- SPECIAL FIX UNTUK FRAME BARU (AI GENERATED) ---
-                // Karena AI kadang menggambar kotak putihnya terlalu kecil,
-                // kita bolongi secara manual menggunakan koordinat pasti!
+                if (src.includes('frame1.png')) {
+                    ctx.clearRect(w * 0.096, h * 0.236, w * 0.815, h * 0.665);
+                    const resultUrl = cvs.toDataURL('image/png');
+                    processedFrames[src] = resultUrl;
+                    resolve(resultUrl);
+                    return;
+                }
                 if (src.includes('frame11.png')) {
                     // Sesuai garis merah yang Anda gambar!
                     ctx.clearRect(w * 0.05, h * 0.18, w * 0.90, h * 0.48);
@@ -59,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const isLight = (idx) => {
                     const p = idx * 4;
-                    // Kriteria: putih atau abu-abu terang (checkerboard)
+                    // Kriteria: putih atau abu-abu terang
                     return data[p] > 175 && data[p+1] > 175 && data[p+2] > 175 && data[p+3] > 0;
                 };
 
@@ -126,66 +136,208 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ---- FILE UPLOAD LOGIC ----
+    if (uploadInput) {
+        uploadInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            
+            await handlePhotoUpload(files);
+        });
+    }
+
+    async function handlePhotoUpload(files) {
+        const needed = currentLayout === '1-cut' ? 1 : 4;
+        const uploadedUrls = [];
+        
+        // Convert files to base64
+        const readImage = (file) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+        });
+
+        for (let i = 0; i < files.length && i < needed; i++) {
+            uploadedUrls.push(await readImage(files[i]));
+        }
+
+        // Apply frames to uploaded photos
+        const captures = [];
+        const targetWidth = 1080;
+        const targetHeight = 1440;
+
+        for (let i = 0; i < needed; i++) {
+            const src = uploadedUrls[i % uploadedUrls.length]; // loop if < needed
+            const img = await new Promise(res => {
+                const i = new Image(); i.onload = () => res(i); i.src = src;
+            });
+            
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // object-fit: cover logic
+            const imgRatio = img.width / img.height;
+            const targetRatio = targetWidth / targetHeight;
+            let drawWidth, drawHeight, offsetX, offsetY;
+            if (imgRatio > targetRatio) {
+                drawHeight = targetHeight;
+                drawWidth = img.height * imgRatio * (targetHeight / img.height);
+                offsetX = (targetWidth - drawWidth) / 2;
+                offsetY = 0;
+            } else {
+                drawWidth = targetWidth;
+                drawHeight = img.width / imgRatio * (targetWidth / img.width);
+                offsetX = 0;
+                offsetY = (targetHeight - drawHeight) / 2;
+            }
+            
+            // Draw photo (front camera flip NOT applied to uploads)
+            tempCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            
+            // Overlay frame
+            tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
+            
+            captures.push(tempCanvas);
+        }
+
+        uploadInput.value = ''; // Reset input
+        processCapturesAndShowResult(captures);
+    }
+
+    async function processCapturesAndShowResult(captures) {
+        // Build Final Collage
+        const finalWidth = currentLayout === '4-cut-grid' ? 1080 * 2 : 1080;
+        const finalHeight = currentLayout === '4-cut-grid' ? 1440 * 2 : (currentLayout === '4-cut-strip' ? 1440 * 4 : 1440);
+        
+        canvas.width = finalWidth;
+        canvas.height = finalHeight;
+
+        if (currentLayout === '1-cut') {
+            ctx.drawImage(captures[0], 0, 0);
+        } else if (currentLayout === '4-cut-strip') {
+            ctx.drawImage(captures[0], 0, 0);
+            ctx.drawImage(captures[1], 0, 1440);
+            ctx.drawImage(captures[2], 0, 2880);
+            ctx.drawImage(captures[3], 0, 4320);
+        } else if (currentLayout === '4-cut-grid') {
+            ctx.drawImage(captures[0], 0, 0);
+            ctx.drawImage(captures[1], 1080, 0);
+            ctx.drawImage(captures[2], 0, 1440);
+            ctx.drawImage(captures[3], 1080, 1440);
+        }
+
+        const dataURL = canvas.toDataURL('image/png');
+        resultImage.src = dataURL;
+
+        // Go to Result View
+        switchView(viewResult);
+        stopCamera();
+    }
+
+    // ---- CAPTURE SEQUENCE LOGIC ----
+    const viewHome = document.getElementById('view-home');
+    const viewCamera = document.getElementById('view-camera');
+    const viewResult = document.getElementById('view-result');
+    const btnStart = document.getElementById('btn-start');
+    const btnBackHome = document.getElementById('btn-back-home');
+    const shutterSound = document.getElementById('shutter-sound');
+    let streamRef = null;
+    let currentFacingMode = 'user'; // Default camera
+
+    function switchView(viewToShow) {
+        [viewHome, viewCamera, viewResult].forEach(v => {
+            v.classList.remove('active');
+        });
+        viewToShow.classList.add('active');
+    }
+
+    btnStart.addEventListener('click', () => {
+        switchView(viewCamera);
+        setupCamera(); // Initialize camera ONLY when entering camera view
+    });
+
+    btnBackHome.addEventListener('click', () => {
+        switchView(viewHome);
+        stopCamera();
+    });
+
     // Camera Setup
     async function setupCamera() {
+        if (streamRef) return; // already running
         try {
-            // Cek apakah dibuka menggunakan file:///
             if (window.location.protocol === 'file:') {
-                throw new Error('Kamera diblokir. Harap akses melalui http://localhost/difotoku atau http://difotoku.test di browser, jangan di-double click.');
+                throw new Error('Kamera diblokir. Harap akses melalui http://localhost/difotoku.');
             }
-
-            // Cek dukungan browser
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Browser tidak mendukung akses kamera atau web tidak diakses menggunakan HTTPS/localhost.');
+                throw new Error('Browser tidak mendukung akses kamera.');
             }
+            cameraStatus.classList.remove('hidden');
+            cameraStatus.textContent = 'Menyiapkan kamera...';
 
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
+            streamRef = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: false
             });
-            video.srcObject = stream;
+            video.srcObject = streamRef;
             
+            // Flip video element horizontally ONLY if using front camera
+            if (currentFacingMode === 'user') {
+                video.style.transform = 'scaleX(-1)';
+            } else {
+                video.style.transform = 'scaleX(1)';
+            }
+
             video.onloadedmetadata = () => {
                 cameraStatus.classList.add('hidden');
                 video.play();
             };
         } catch (err) {
             console.error('Error accessing webcam:', err);
-            cameraStatus.textContent = err.message || 'Gagal mengakses kamera. Pastikan izin diberikan.';
-            cameraStatus.style.color = '#ff4a4a';
-            cameraStatus.style.padding = '20px';
-            cameraStatus.style.textAlign = 'center';
-            cameraStatus.style.lineHeight = '1.5';
+            cameraStatus.textContent = err.message || 'Gagal mengakses kamera.';
         }
     }
 
-    // Initialize Camera
-    setupCamera();
+    function stopCamera() {
+        if (streamRef) {
+            streamRef.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            streamRef = null;
+        }
+    }
+
+    // Camera Flip Logic
+    if (btnFlipCamera) {
+        btnFlipCamera.addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            stopCamera();
+            setupCamera();
+        });
+    }
+
+    // Modal Frame Logic
+    if (btnShowFrames && btnCloseFrames && frameModal) {
+        btnShowFrames.addEventListener('click', () => frameModal.classList.add('show'));
+        btnCloseFrames.addEventListener('click', () => frameModal.classList.remove('show'));
+    }
 
     // Frame Selection Logic
     frameOptions.forEach(option => {
         option.addEventListener('click', async () => {
-            // Remove active class from all
             frameOptions.forEach(opt => opt.classList.remove('active'));
-            // Add active class to clicked
             option.classList.add('active');
             
-            // Efek loading
+            if (frameModal) frameModal.classList.remove('show');
+
             frameOverlay.style.opacity = '0.5';
-            
-            // Terapkan magic transparency otomatis
             const frameSrc = option.getAttribute('data-frame');
             const transparentUrl = await getTransparentFrame(frameSrc);
             frameOverlay.src = transparentUrl;
-            frameOverlay.style.opacity = '1'; // Kembalikan solid 100%
+            frameOverlay.style.opacity = '1'; 
         });
     });
 
-    // Inisialisasi frame pertama saat halaman dimuat
+    // Init first frame
     const firstFrame = document.querySelector('.frame-option.active');
     if (firstFrame) {
         getTransparentFrame(firstFrame.getAttribute('data-frame')).then(url => {
@@ -193,67 +345,123 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Capture Logic
-    btnCapture.addEventListener('click', () => {
-        // Set target output resolution (e.g. 1080x1440 for 3:4 aspect ratio portrait)
+    // Layout Selection Logic
+    let currentLayout = '1-cut';
+    const layoutBtns = document.querySelectorAll('.layout-btn');
+    layoutBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            layoutBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLayout = btn.getAttribute('data-layout');
+        });
+    });
+
+    const countdownDisplay = document.getElementById('countdown-display');
+
+    // Helper: Delay
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    // Helper: Capture Single Frame
+    function captureSingleFrame() {
+        // Play shutter sound
+        shutterSound.currentTime = 0;
+        shutterSound.play().catch(e => console.log('Audio error', e));
+
+        // Flash effect
+        const flash = document.createElement('div');
+        flash.style.position = 'absolute';
+        flash.style.top = '0'; flash.style.left = '0';
+        flash.style.width = '100%'; flash.style.height = '100%';
+        flash.style.backgroundColor = 'white';
+        flash.style.zIndex = '100';
+        flash.style.transition = 'opacity 0.4s ease-out';
+        document.getElementById('preview-area').appendChild(flash);
+        setTimeout(() => { flash.style.opacity = '0'; }, 50);
+        setTimeout(() => { flash.remove(); }, 450);
+
+        // Draw to temp canvas
         const targetWidth = 1080;
         const targetHeight = 1440;
-        
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
+        const tempCtx = tempCanvas.getContext('2d');
 
-        // 1. Draw Video (with object-fit: cover logic and mirror effect)
         const videoRatio = video.videoWidth / video.videoHeight;
         const targetRatio = targetWidth / targetHeight;
-        
         let drawWidth, drawHeight, offsetX, offsetY;
 
         if (videoRatio > targetRatio) {
-            // Video is wider than target
             drawHeight = targetHeight;
             drawWidth = video.videoHeight * videoRatio * (targetHeight / video.videoHeight);
             offsetX = (targetWidth - drawWidth) / 2;
             offsetY = 0;
         } else {
-            // Video is taller than target
             drawWidth = targetWidth;
             drawHeight = video.videoWidth / videoRatio * (targetWidth / video.videoWidth);
             offsetX = 0;
             offsetY = (targetHeight - drawHeight) / 2;
         }
 
-        // Apply mirror effect for drawing video
-        ctx.save();
-        ctx.translate(targetWidth, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
-        ctx.restore();
-
-        // 2. Draw Frame Overlay (sudah bolong otomatis)
-        ctx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
-
-        // 3. Show Result
-        const dataURL = canvas.toDataURL('image/png');
-        resultImage.src = dataURL;
+        tempCtx.save();
+        // ONLY FLIP if using user facing camera!
+        if (currentFacingMode === 'user') {
+            tempCtx.translate(targetWidth, 0);
+            tempCtx.scale(-1, 1);
+        }
+        tempCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+        tempCtx.restore();
         
-        // UI State changes
-        resultArea.classList.remove('hidden');
-        btnCapture.classList.add('hidden');
-        resultActions.classList.remove('hidden');
+        tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
+
+        return tempCanvas;
+    }
+
+    // Capture Sequence
+    btnCapture.addEventListener('click', async () => {
+        btnCapture.style.pointerEvents = 'none'; // disable button
+        btnCapture.style.opacity = '0.5';
+        
+        let shotsRequired = currentLayout === '1-cut' ? 1 : 4;
+        let captures = [];
+
+        for (let i = 0; i < shotsRequired; i++) {
+            // Countdown
+            countdownDisplay.classList.remove('hidden');
+            for (let c = 3; c > 0; c--) {
+                countdownDisplay.textContent = c;
+                await delay(1000);
+            }
+            countdownDisplay.classList.add('hidden');
+            
+            // Capture
+            const canvasFrame = captureSingleFrame();
+            captures.push(canvasFrame);
+
+            // Wait a bit before next shot, unless it's the last one
+            if (i < shotsRequired - 1) {
+                await delay(1000);
+            }
+        }
+
+        // Restore button state
+        btnCapture.style.pointerEvents = 'auto';
+        btnCapture.style.opacity = '1';
+
+        // Process captures and show result
+        processCapturesAndShowResult(captures);
     });
 
     // Retake Logic
     btnRetake.addEventListener('click', () => {
-        resultArea.classList.add('hidden');
-        btnCapture.classList.remove('hidden');
-        resultActions.classList.add('hidden');
+        switchView(viewCamera);
+        setupCamera();
         resultImage.src = '';
     });
 
     // Download Logic
     btnDownload.addEventListener('click', () => {
         const link = document.createElement('a');
-        link.download = `Difotoku_${Date.now()}.png`;
+        link.download = `Difotoku_MultiLayout_${Date.now()}.png`;
         link.href = resultImage.src;
         document.body.appendChild(link);
         link.click();

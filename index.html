@@ -132,18 +132,13 @@
             </header>
 
             <main>
-                <!-- Layout Selection -->
-                <div class="layout-selector">
-                    <button class="layout-btn active" data-layout="1-cut">1 Foto</button>
-                    <button class="layout-btn" data-layout="4-cut-strip">4 Strip</button>
-                    <button class="layout-btn" data-layout="4-cut-grid">4 Grid</button>
-                </div>
+                <!-- Layout Selection Removed -->
 
                 <div class="booth-container">
-                    <!-- Camera Preview Area -->
                     <div class="preview-area" id="preview-area">
                         <video id="camera-feed" autoplay playsinline muted></video>
-                        <img id="frame-overlay" src="images/frame1.png" alt="Frame Overlay">
+                        <canvas id="live-compositor" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5; pointer-events: none; display: block;"></canvas>
+                        <img id="frame-overlay" src="images/frame6.png" alt="Frame Overlay">
                         <!-- Countdown Timer -->
                         <div id="countdown-display" class="countdown-display hidden">3</div>
                         <!-- Removed Camera Status Element -->
@@ -179,44 +174,11 @@
                 </div>
                 <section class="frame-gallery">
                     <div class="gallery-scroll">
-                        <div class="frame-option active" data-frame="images/frame1.png">
-                            <img src="images/frame1.png" alt="Blur"><span>Blur</span>
+                        <div class="frame-option active" data-frame="images/frame6.png">
+                            <img src="images/frame6.png" alt="Koran Modern"><span>Modern</span>
                         </div>
-                        <div class="frame-option" data-frame="images/frame2.png">
-                            <img src="images/frame2.png" alt="Indie"><span>Indie</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame3.png">
-                            <img src="images/frame3.png" alt="Lokal"><span>Lokal</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame4.png">
-                            <img src="images/frame4.png" alt="Cafe"><span>Cafe</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame5.png">
-                            <img src="images/frame5.png" alt="Gamer"><span>Gamer</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame6.png">
-                            <img src="images/frame6.png" alt="Koran"><span>Koran</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame7.png">
-                            <img src="images/frame7.png" alt="Y2K"><span>Y2K</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame8.png">
-                            <img src="images/frame8.png" alt="Retro"><span>Retro</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame9.png">
-                            <img src="images/frame9.png" alt="Polaroid"><span>Polaroid</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame10.png">
-                            <img src="images/frame10.png" alt="Film"><span>Film</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame11.png">
-                            <img src="images/frame11.png" alt="Wanted"><span>Wanted</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame12.png">
-                            <img src="images/frame12.png" alt="Social"><span>Social</span>
-                        </div>
-                        <div class="frame-option" data-frame="images/frame13.png">
-                            <img src="images/frame13.png" alt="K-Pop"><span>K-Pop</span>
+                        <div class="frame-option" data-frame="images/frame15.png">
+                            <img src="images/frame15.png" alt="Breaking News"><span>Breaking News</span>
                         </div>
                     </div>
                 </section>

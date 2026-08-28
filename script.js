@@ -37,7 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
         'frame10.png': [0.240, 0.111, 0.515, 0.637],
         'frame11.png': [0.05, 0.18, 0.90, 0.48],
         'frame12.png': [0.225, 0.176, 0.550, 0.540],
-        'frame13.png': [0.170, 0.129, 0.737, 0.676]
+        'frame13.png': [0.170, 0.129, 0.737, 0.676],
+        'frame15.png': [ 
+            [0.0740, 0.6389, 0.3981, 0.2361], // 1. Bottom Left
+            [0.5278, 0.6389, 0.3981, 0.2361], // 2. Bottom Right
+            [0.0740, 0.2500, 0.8519, 0.3611]  // 3. Top Large
+        ]
     };
 
     function getTransparentFrame(src) {
@@ -57,9 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const frameKey = Object.keys(frameCutouts).find(k => src.includes(k));
                 
                 if (frameKey) {
-                    const [px, py, pw, ph] = frameCutouts[frameKey];
-                    // Bolongi secara pasti! Tidak akan pernah menghapus teks koran atau merusak frame
-                    ctx.clearRect(w * px, h * py, w * pw, h * ph);
+                    let cutouts = frameCutouts[frameKey];
+                    if (cutouts.length > 0 && !Array.isArray(cutouts[0])) cutouts = [cutouts];
+                    cutouts.forEach(c => {
+                        const [px, py, pw, ph] = c;
+                        ctx.clearRect(w * px, h * py, w * pw, h * ph);
+                    });
                 }
                 
                 const resultUrl = cvs.toDataURL('image/png');
@@ -81,7 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handlePhotoUpload(files) {
-        const needed = currentLayout === '1-cut' ? 1 : 4;
+        const activeOpt = document.querySelector('.frame-option.active');
+        const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
+        const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
+        let cutouts = frameKey ? frameCutouts[frameKey] : [[0, 0, 1, 1]];
+        if (cutouts.length > 0 && !Array.isArray(cutouts[0])) cutouts = [cutouts];
+        
+        const needed = cutouts.length;
         const uploadedUrls = [];
         
         // Convert files to base64
@@ -96,25 +110,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Apply frames to uploaded photos
-        const captures = [];
         const targetWidth = 1080;
         const targetHeight = 1440;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
+        const tempCtx = tempCanvas.getContext('2d');
 
         for (let i = 0; i < needed; i++) {
-            const src = uploadedUrls[i % uploadedUrls.length]; // loop if < needed
+            if (uploadedUrls.length === 0) break;
+            const src = uploadedUrls[i % uploadedUrls.length];
             const img = await new Promise(res => {
-                const i = new Image(); i.onload = () => res(i); i.src = src;
+                const imgObj = new Image(); imgObj.onload = () => res(imgObj); imgObj.src = src;
             });
             
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            // object-fit: cover logic for the CUTOUT BOX, not the full canvas!
-            const activeOpt = document.querySelector('.frame-option.active');
-            const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
-            const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
-            const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+            const [px, py, pw, ph] = cutouts[i];
             const boxX = targetWidth * px, boxY = targetHeight * py;
             const boxW = targetWidth * pw, boxH = targetHeight * ph;
             
@@ -134,22 +143,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 offsetY = boxY + (boxH - drawHeight) / 2;
             }
             
-            // Draw photo (front camera flip NOT applied to uploads)
             tempCtx.save();
             tempCtx.beginPath();
             tempCtx.rect(boxX, boxY, boxW, boxH);
             tempCtx.clip();
             tempCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             tempCtx.restore();
-            
-            // Overlay frame
-            tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
-            
-            captures.push(tempCanvas);
         }
-
+        
+        tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
+        
         uploadInput.value = ''; // Reset input
-        processCapturesAndShowResult(captures);
+        processCapturesAndShowResult([tempCanvas]);
     }
 
     async function processCapturesAndShowResult(captures) {
@@ -269,9 +274,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseFrames.addEventListener('click', () => frameModal.classList.remove('show'));
     }
 
-    function updateVideoPosition(src) {
+    function updateVideoPosition(src, slotIndex = -1) {
         const frameKey = Object.keys(frameCutouts).find(k => src.includes(k));
-        const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+        let cutouts = frameKey ? frameCutouts[frameKey] : [[0, 0, 1, 1]];
+        if (cutouts.length > 0 && !Array.isArray(cutouts[0])) cutouts = [cutouts];
+        
+        let targetSlot = slotIndex;
+        if (targetSlot === -1) {
+            let maxArea = 0;
+            for (let i = 0; i < cutouts.length; i++) {
+                const area = cutouts[i][2] * cutouts[i][3];
+                if (area > maxArea) {
+                    maxArea = area;
+                    targetSlot = i;
+                }
+            }
+        }
+        
+        const [px, py, pw, ph] = cutouts[targetSlot] || cutouts[0];
         video.style.left = `${px * 100}%`;
         video.style.top = `${py * 100}%`;
         video.style.width = `${pw * 100}%`;
@@ -323,13 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper: Delay
     const delay = ms => new Promise(res => setTimeout(res, ms));
 
-    // Helper: Capture Single Frame
-    function captureSingleFrame() {
-        // Play shutter sound
+    function captureSlot(cutout, targetWidth, targetHeight, targetCtx) {
         shutterSound.currentTime = 0;
         shutterSound.play().catch(e => console.log('Audio error', e));
 
-        // Flash effect
         const flash = document.createElement('div');
         flash.style.position = 'absolute';
         flash.style.top = '0'; flash.style.left = '0';
@@ -341,17 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { flash.style.opacity = '0'; }, 50);
         setTimeout(() => { flash.remove(); }, 450);
 
-        // Draw to temp canvas
-        const targetWidth = 1080;
-        const targetHeight = 1440;
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
-        const tempCtx = tempCanvas.getContext('2d');
-
-        const activeOpt = document.querySelector('.frame-option.active');
-        const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
-        const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
-        const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+        const [px, py, pw, ph] = cutout;
         const boxX = targetWidth * px, boxY = targetHeight * py;
         const boxW = targetWidth * pw, boxH = targetHeight * ph;
         
@@ -371,24 +378,18 @@ document.addEventListener('DOMContentLoaded', () => {
             offsetY = boxY + (boxH - drawHeight) / 2;
         }
 
-        tempCtx.save();
-        tempCtx.beginPath();
-        tempCtx.rect(boxX, boxY, boxW, boxH);
-        tempCtx.clip();
+        targetCtx.save();
+        targetCtx.beginPath();
+        targetCtx.rect(boxX, boxY, boxW, boxH);
+        targetCtx.clip();
 
-        // ONLY FLIP if using user facing camera!
         if (currentFacingMode === 'user') {
-            tempCtx.translate(boxX + boxW/2, boxY + boxH/2);
-            tempCtx.scale(-1, 1);
-            tempCtx.translate(-(boxX + boxW/2), -(boxY + boxH/2));
+            targetCtx.translate(boxX + boxW/2, boxY + boxH/2);
+            targetCtx.scale(-1, 1);
+            targetCtx.translate(-(boxX + boxW/2), -(boxY + boxH/2));
         }
-        
-        tempCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
-        tempCtx.restore();
-        
-        tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
-
-        return tempCanvas;
+        targetCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+        targetCtx.restore();
     }
 
     // Capture Sequence
@@ -396,10 +397,30 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCapture.style.pointerEvents = 'none'; // disable button
         btnCapture.style.opacity = '0.5';
         
-        let shotsRequired = currentLayout === '1-cut' ? 1 : 4;
-        let captures = [];
+        const activeOpt = document.querySelector('.frame-option.active');
+        const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
+        const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
+        let cutouts = frameKey ? frameCutouts[frameKey] : [[0, 0, 1, 1]];
+        if (cutouts.length > 0 && !Array.isArray(cutouts[0])) cutouts = [cutouts];
+        
+        const targetWidth = 1080;
+        const targetHeight = 1440;
+        
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        const liveCompositor = document.getElementById('live-compositor');
+        if(liveCompositor) {
+            liveCompositor.width = targetWidth; liveCompositor.height = targetHeight;
+            const liveCtx = liveCompositor.getContext('2d');
+            liveCtx.clearRect(0, 0, targetWidth, targetHeight);
+        }
 
-        for (let i = 0; i < shotsRequired; i++) {
+        for (let i = 0; i < cutouts.length; i++) {
+            // Kamera berpindah ke slot yang sedang aktif (agar user berkaca di kotak yang tepat)
+            updateVideoPosition(origSrc, i);
+            
             // Countdown
             countdownDisplay.classList.remove('hidden');
             for (let c = 3; c > 0; c--) {
@@ -408,22 +429,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             countdownDisplay.classList.add('hidden');
             
-            // Capture
-            const canvasFrame = captureSingleFrame();
-            captures.push(canvasFrame);
+            captureSlot(cutouts[i], targetWidth, targetHeight, tempCtx);
+            
+            if(liveCompositor) {
+                const liveCtx = liveCompositor.getContext('2d');
+                liveCtx.drawImage(tempCanvas, 0, 0);
+            }
 
-            // Wait a bit before next shot, unless it's the last one
-            if (i < shotsRequired - 1) {
+            if (i < cutouts.length - 1) {
                 await delay(1000);
             }
         }
+        
+        // Overlay frame
+        tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
+        
+        // Restore video pos to largest slot
+        updateVideoPosition(origSrc);
 
         // Restore button state
         btnCapture.style.pointerEvents = 'auto';
         btnCapture.style.opacity = '1';
 
         // Process captures and show result
-        processCapturesAndShowResult(captures);
+        processCapturesAndShowResult([tempCanvas]);
     });
 
     // Retake Logic
@@ -431,6 +460,11 @@ document.addEventListener('DOMContentLoaded', () => {
         switchView(viewCamera);
         setupCamera();
         resultImage.src = '';
+        const liveCompositor = document.getElementById('live-compositor');
+        if(liveCompositor) {
+            const ctx = liveCompositor.getContext('2d');
+            ctx.clearRect(0, 0, liveCompositor.width, liveCompositor.height);
+        }
     });
 
     // Download Logic

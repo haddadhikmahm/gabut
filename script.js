@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 processedFrames[src] = resultUrl;
                 resolve(resultUrl);
             };
-            img.src = src;
+            img.src = src + '?v=' + new Date().getTime(); // Prevent browser caching
         });
     }
 

@@ -45,10 +45,10 @@ draw.rectangle([(830, 280), (1030, 320)], outline=(80,80,80), width=2)
 draw.text((850, 285), "26 MAY 2025", font=font_small, fill=(50,50,50))
 
 # Logo
-logo_text = "JEPRETO"
+logo_text = "difotoku"
 bbox = draw.textbbox((0,0), logo_text, font=font_logo)
 lw = bbox[2] - bbox[0]
-draw.text(((width - lw)/2, 280), logo_text, font=font_logo, fill=(20, 20, 20))
+draw.text(((width - lw)/2, 280), logo_text, font=font_logo, fill=(30, 30, 30))
 
 # Cutout Rectangles (solid white so it can be made transparent)
 # Top large photo

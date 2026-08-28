@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Difotoku - Online Photobooth Tren Anak Muda Bandung">
+    <title>Difotoku - Photobooth Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>DIFOTOKU</h1>
+            <p>Jepret gaya skenamu hari ini!</p>
+        </header>
+
+        <main>
+            <div class="booth-container">
+                <!-- Camera Preview Area -->
+                <div class="preview-area" id="preview-area">
+                    <video id="camera-feed" autoplay playsinline muted></video>
+                    <img id="frame-overlay" src="images/frame1.png" alt="Frame Overlay">
+                    <!-- Loading or Error State -->
+                    <div id="camera-status" class="camera-status">
+                        Membuka kamera...
+                    </div>
+                </div>
+
+                <!-- Hidden Canvas for Processing -->
+                <canvas id="capture-canvas"></canvas>
+
+                <!-- Result Area (Hidden initially) -->
+                <div class="result-area hidden" id="result-area">
+                    <img id="result-image" alt="Hasil Foto">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-controls">
+                <button id="btn-capture" class="btn btn-primary" aria-label="Ambil Foto">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>Ambil Foto</span>
+                </button>
+                <div class="result-actions hidden" id="result-actions">
+                    <button id="btn-retake" class="btn btn-secondary">Ulangi</button>
+                    <button id="btn-download" class="btn btn-primary">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Unduh</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Frame Gallery -->
+            <section class="frame-gallery">
+                <h3>Pilih Bingkai Skenamu</h3>
+                <div class="gallery-scroll">
+                    <div class="frame-option active" data-frame="images/frame1.png">
+                        <img src="images/frame1.png" alt="Nostalgia Blur">
+                        <span>Blur</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame2.png">
+                        <img src="images/frame2.png" alt="Indie Music">
+                        <span>Indie</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame3.png">
+                        <img src="images/frame3.png" alt="Streetwear">
+                        <span>Lokal</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame4.png">
+                        <img src="images/frame4.png" alt="Cafe Hopping">
+                        <span>Cafe</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame5.png">
+                        <img src="images/frame5.png" alt="Digital/Gaming">
+                        <span>Gamer</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame6.png">
+                        <img src="images/frame6.png" alt="Koran Berita">
+                        <span>Koran</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame7.png">
+                        <img src="images/frame7.png" alt="Y2K Cyberpunk">
+                        <span>Y2K</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame8.png">
+                        <img src="images/frame8.png" alt="Retro VHS">
+                        <span>Retro</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame9.png">
+                        <img src="images/frame9.png" alt="Polaroid Wall">
+                        <span>Polaroid</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame10.png">
+                        <img src="images/frame10.png" alt="Film 35mm">
+                        <span>Film</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame11.png">
+                        <img src="images/frame11.png" alt="Wanted Poster">
+                        <span>Wanted</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame12.png">
+                        <img src="images/frame12.png" alt="Social Media Overlay">
+                        <span>Social</span>
+                    </div>
+                    <div class="frame-option" data-frame="images/frame13.png">
+                        <img src="images/frame13.png" alt="K-Pop Deco Photocard">
+                        <span>K-Pop</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

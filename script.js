@@ -22,8 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const frameModal = document.getElementById('frame-modal');
     const frameOptions = document.querySelectorAll('.frame-option');
 
-    // AI Magic: Cache & Function to remove fake transparency
     const processedFrames = {};
+
+    // EXACT Coordinates of the white/checkerboard placeholders for each frame [x, y, w, h] as percentages
+    const frameCutouts = {
+        'frame1.png': [0.096, 0.236, 0.815, 0.665],
+        'frame2.png': [0.290, 0.368, 0.421, 0.447],
+        'frame3.png': [0.096, 0.236, 0.815, 0.665],
+        'frame4.png': [0.107, 0.183, 0.786, 0.606],
+        'frame5.png': [0.128, 0.227, 0.744, 0.599],
+        'frame6.png': [0.211, 0.412, 0.579, 0.346], // NEWSPAPER PERFECT BOX
+        'frame7.png': [0.272, 0.273, 0.455, 0.453],
+        'frame8.png': [0.181, 0.186, 0.639, 0.629],
+        'frame9.png': [0.257, 0.222, 0.463, 0.591],
+        'frame10.png': [0.240, 0.111, 0.515, 0.637],
+        'frame11.png': [0.05, 0.18, 0.90, 0.48],
+        'frame12.png': [0.225, 0.176, 0.550, 0.540],
+        'frame13.png': [0.170, 0.129, 0.737, 0.676]
+    };
 
     function getTransparentFrame(src) {
         if (processedFrames[src]) return Promise.resolve(processedFrames[src]);
@@ -38,94 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ctx = cvs.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 
-                const imgData = ctx.getImageData(0, 0, w, h);
-                const data = imgData.data;
-
-                // --- SPECIAL FIX UNTUK FRAME BARU (AI GENERATED) ---
-                if (src.includes('frame1.png')) {
-                    ctx.clearRect(w * 0.096, h * 0.236, w * 0.815, h * 0.665);
-                    const resultUrl = cvs.toDataURL('image/png');
-                    processedFrames[src] = resultUrl;
-                    resolve(resultUrl);
-                    return;
-                }
-                if (src.includes('frame11.png')) {
-                    // Sesuai garis merah yang Anda gambar!
-                    ctx.clearRect(w * 0.05, h * 0.18, w * 0.90, h * 0.48);
-                    const resultUrl = cvs.toDataURL('image/png');
-                    processedFrames[src] = resultUrl;
-                    resolve(resultUrl);
-                    return;
-                }
-                if (src.includes('frame12.png') || src.includes('frame13.png')) {
-                    // Frame Social & K-Pop: Bolongi area besar di tengah
-                    ctx.clearRect(w * 0.12, h * 0.15, w * 0.76, h * 0.70);
-                    const resultUrl = cvs.toDataURL('image/png');
-                    processedFrames[src] = resultUrl;
-                    resolve(resultUrl);
-                    return;
-                }
-                // --------------------------------------------------
+                // Cari key frame yang cocok dari src (misalnya: "images/frame6.png" -> "frame6.png")
+                const frameKey = Object.keys(frameCutouts).find(k => src.includes(k));
                 
-                const isLight = (idx) => {
-                    const p = idx * 4;
-                    // Kriteria: putih atau abu-abu terang
-                    return data[p] > 175 && data[p+1] > 175 && data[p+2] > 175 && data[p+3] > 0;
-                };
-
-                const visited = new Uint8Array(w * h);
-                let maxArea = 0;
-                let bestSeed = -1;
-
-                // Pass 1: Cari area terang paling besar yang bersambung (pasti ini adalah kotak placeholder)
-                for (let i = 0; i < w * h; i += 47) { // Cek tiap beberapa pixel biar cepat
-                    if (!visited[i] && isLight(i)) {
-                        let area = 0;
-                        const stack = [i];
-                        
-                        while(stack.length > 0) {
-                            const idx = stack.pop();
-                            if (visited[idx]) continue;
-                            visited[idx] = 1;
-                            area++;
-                            
-                            const x = idx % w;
-                            const y = Math.floor(idx / w);
-                            
-                            if (x > 0 && !visited[idx - 1] && isLight(idx - 1)) stack.push(idx - 1);
-                            if (x < w - 1 && !visited[idx + 1] && isLight(idx + 1)) stack.push(idx + 1);
-                            if (y > 0 && !visited[idx - w] && isLight(idx - w)) stack.push(idx - w);
-                            if (y < h - 1 && !visited[idx + w] && isLight(idx + w)) stack.push(idx + w);
-                        }
-                        
-                        if (area > maxArea) {
-                            maxArea = area;
-                            bestSeed = i;
-                        }
-                    }
-                }
-
-                // Pass 2: Kosongkan area terbesar tersebut (Jadikan transparan)
-                if (bestSeed !== -1 && maxArea > (w * h * 0.02)) { // minimal 2% dari total gambar
-                    visited.fill(0);
-                    const stack = [bestSeed];
-                    
-                    while(stack.length > 0) {
-                        const idx = stack.pop();
-                        if (visited[idx]) continue;
-                        visited[idx] = 1;
-                        
-                        data[idx * 4 + 3] = 0; // Alpha = 0 (Transparan!)
-                        
-                        const x = idx % w;
-                        const y = Math.floor(idx / w);
-                        
-                        if (x > 0 && !visited[idx - 1] && isLight(idx - 1)) stack.push(idx - 1);
-                        if (x < w - 1 && !visited[idx + 1] && isLight(idx + 1)) stack.push(idx + 1);
-                        if (y > 0 && !visited[idx - w] && isLight(idx - w)) stack.push(idx - w);
-                        if (y < h - 1 && !visited[idx + w] && isLight(idx + w)) stack.push(idx + w);
-                    }
-                    ctx.putImageData(imgData, 0, 0);
+                if (frameKey) {
+                    const [px, py, pw, ph] = frameCutouts[frameKey];
+                    // Bolongi secara pasti! Tidak akan pernah menghapus teks koran atau merusak frame
+                    ctx.clearRect(w * px, h * py, w * pw, h * ph);
                 }
                 
                 const resultUrl = cvs.toDataURL('image/png');

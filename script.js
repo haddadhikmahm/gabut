@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const video = document.getElementById('camera-feed');
     const frameOverlay = document.getElementById('frame-overlay');
-    const cameraStatus = document.getElementById('camera-status');
     const canvas = document.getElementById('capture-canvas');
     const ctx = canvas.getContext('2d');
     const resultArea = document.getElementById('result-area');
@@ -111,24 +110,37 @@ document.addEventListener('DOMContentLoaded', () => {
             tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
             const tempCtx = tempCanvas.getContext('2d');
             
-            // object-fit: cover logic
+            // object-fit: cover logic for the CUTOUT BOX, not the full canvas!
+            const activeOpt = document.querySelector('.frame-option.active');
+            const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
+            const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
+            const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+            const boxX = targetWidth * px, boxY = targetHeight * py;
+            const boxW = targetWidth * pw, boxH = targetHeight * ph;
+            
             const imgRatio = img.width / img.height;
-            const targetRatio = targetWidth / targetHeight;
+            const boxRatio = boxW / boxH;
             let drawWidth, drawHeight, offsetX, offsetY;
-            if (imgRatio > targetRatio) {
-                drawHeight = targetHeight;
-                drawWidth = img.height * imgRatio * (targetHeight / img.height);
-                offsetX = (targetWidth - drawWidth) / 2;
-                offsetY = 0;
+            
+            if (imgRatio > boxRatio) {
+                drawHeight = boxH;
+                drawWidth = img.height * imgRatio * (boxH / img.height);
+                offsetX = boxX + (boxW - drawWidth) / 2;
+                offsetY = boxY;
             } else {
-                drawWidth = targetWidth;
-                drawHeight = img.width / imgRatio * (targetWidth / img.width);
-                offsetX = 0;
-                offsetY = (targetHeight - drawHeight) / 2;
+                drawWidth = boxW;
+                drawHeight = img.width / imgRatio * (boxW / img.width);
+                offsetX = boxX;
+                offsetY = boxY + (boxH - drawHeight) / 2;
             }
             
             // Draw photo (front camera flip NOT applied to uploads)
+            tempCtx.save();
+            tempCtx.beginPath();
+            tempCtx.rect(boxX, boxY, boxW, boxH);
+            tempCtx.clip();
             tempCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            tempCtx.restore();
             
             // Overlay frame
             tempCtx.drawImage(frameOverlay, 0, 0, targetWidth, targetHeight);
@@ -207,11 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 throw new Error('Browser tidak mendukung akses kamera.');
             }
-            cameraStatus.classList.remove('hidden');
-            cameraStatus.textContent = 'Menyiapkan kamera...';
+            
+            // Remove 'Menyiapkan kamera...' status text as requested by user
 
             streamRef = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { facingMode: currentFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
                 audio: false
             });
             video.srcObject = streamRef;
@@ -224,12 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             video.onloadedmetadata = () => {
-                cameraStatus.classList.add('hidden');
+                cameraStatus.classList.add('hidden'); // Ensure it stays hidden
                 video.play();
             };
         } catch (err) {
             console.error('Error accessing webcam:', err);
-            cameraStatus.textContent = err.message || 'Gagal mengakses kamera.';
+            // Hide status even on error since user wants it removed
+            cameraStatus.classList.add('hidden'); 
         }
     }
 
@@ -256,6 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseFrames.addEventListener('click', () => frameModal.classList.remove('show'));
     }
 
+    function updateVideoPosition(src) {
+        const frameKey = Object.keys(frameCutouts).find(k => src.includes(k));
+        const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+        video.style.left = `${px * 100}%`;
+        video.style.top = `${py * 100}%`;
+        video.style.width = `${pw * 100}%`;
+        video.style.height = `${ph * 100}%`;
+    }
+
     // Frame Selection Logic
     frameOptions.forEach(option => {
         option.addEventListener('click', async () => {
@@ -266,6 +288,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             frameOverlay.style.opacity = '0.5';
             const frameSrc = option.getAttribute('data-frame');
+            
+            updateVideoPosition(frameSrc);
+
             const transparentUrl = await getTransparentFrame(frameSrc);
             frameOverlay.src = transparentUrl;
             frameOverlay.style.opacity = '1'; 
@@ -275,7 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init first frame
     const firstFrame = document.querySelector('.frame-option.active');
     if (firstFrame) {
-        getTransparentFrame(firstFrame.getAttribute('data-frame')).then(url => {
+        const frameSrc = firstFrame.getAttribute('data-frame');
+        updateVideoPosition(frameSrc);
+        getTransparentFrame(frameSrc).then(url => {
             frameOverlay.src = url;
         });
     }
@@ -321,28 +348,41 @@ document.addEventListener('DOMContentLoaded', () => {
         tempCanvas.width = targetWidth; tempCanvas.height = targetHeight;
         const tempCtx = tempCanvas.getContext('2d');
 
+        const activeOpt = document.querySelector('.frame-option.active');
+        const origSrc = activeOpt ? activeOpt.getAttribute('data-frame') : '';
+        const frameKey = Object.keys(frameCutouts).find(k => origSrc.includes(k));
+        const [px, py, pw, ph] = frameKey ? frameCutouts[frameKey] : [0, 0, 1, 1];
+        const boxX = targetWidth * px, boxY = targetHeight * py;
+        const boxW = targetWidth * pw, boxH = targetHeight * ph;
+        
         const videoRatio = video.videoWidth / video.videoHeight;
-        const targetRatio = targetWidth / targetHeight;
+        const boxRatio = boxW / boxH;
         let drawWidth, drawHeight, offsetX, offsetY;
 
-        if (videoRatio > targetRatio) {
-            drawHeight = targetHeight;
-            drawWidth = video.videoHeight * videoRatio * (targetHeight / video.videoHeight);
-            offsetX = (targetWidth - drawWidth) / 2;
-            offsetY = 0;
+        if (videoRatio > boxRatio) {
+            drawHeight = boxH;
+            drawWidth = video.videoHeight * videoRatio * (boxH / video.videoHeight);
+            offsetX = boxX + (boxW - drawWidth) / 2;
+            offsetY = boxY;
         } else {
-            drawWidth = targetWidth;
-            drawHeight = video.videoWidth / videoRatio * (targetWidth / video.videoWidth);
-            offsetX = 0;
-            offsetY = (targetHeight - drawHeight) / 2;
+            drawWidth = boxW;
+            drawHeight = video.videoWidth / videoRatio * (boxW / video.videoWidth);
+            offsetX = boxX;
+            offsetY = boxY + (boxH - drawHeight) / 2;
         }
 
         tempCtx.save();
+        tempCtx.beginPath();
+        tempCtx.rect(boxX, boxY, boxW, boxH);
+        tempCtx.clip();
+
         // ONLY FLIP if using user facing camera!
         if (currentFacingMode === 'user') {
-            tempCtx.translate(targetWidth, 0);
+            tempCtx.translate(boxX + boxW/2, boxY + boxH/2);
             tempCtx.scale(-1, 1);
+            tempCtx.translate(-(boxX + boxW/2), -(boxY + boxH/2));
         }
+        
         tempCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
         tempCtx.restore();
         
